@@ -16,48 +16,44 @@
 #pragma config(Motor,  port8,           lclaw,         tmotorVex393_MC29, openLoop)
 #pragma config(Motor,  port9,           nub,           tmotorServoStandard, openLoop)
 
-#define length(a) (sizeof(a)/sizeof(a[0]))
-int min(int iterable) {
-	int currentMin = iterable[0];
-	for(int i = 0; i < length(iterable); i++) {
-		if(iterable[i] < currentMin) {
-			currentMin = iterable[i];
-		}
-	}
-	return currentMin;
-}
-
 task main()
 {
 	wait1Msec(5000);
-	int motors[] = {motor[Motor1], motor[Motor2], motor[Motor3], motor[Motor4]}
-	int encoders[] = {sensorvalue[Motor1], sensorvalue[Motor2], sensorvalue[Motor3], sensorvalue[Motor4]}
+	int motors[] = {motor[Motor1], motor[Motor2], motor[Motor3], motor[Motor4]};
+	int encoders[] = {SensorValue[Motor1], SensorValue[Motor2], SensorValue[Motor3], SensorValue[Motor4]};
 	motor[Motor1] = motor[Motor2] = motor[Motor3] = motor[Motor4] = 127;
 	wait1Msec(500);
-	sensorvalue[Motor1] = sensorvalue[Motor2] = sensorvalue[Motor3] = sensorvalue[Motor4] = 0;
+	SensorValue[Motor1] = SensorValue[Motor2] = SensorValue[Motor3] = SensorValue[Motor4] = 0;
 	clearTimer(T1);
 	wait1Msec(1000);
-	double slowSpeed = min(encoders) / (time1(T1) * 1000)
+	int currentMin = encoders[0];
+	for(int i = 0; i < 4; i++) {
+		if(encoders[i] < currentMin) {
+			currentMin = encoders[i];
+		}
+	}
+	float slowSpeed = currentMin / (time1(T1) * 1000);
 	for(int i = 0; i < 4; i++) {
 		wait1Msec(500);
-		sensorvalue[Motor1] = sensorvalue[Motor2] = sensorvalue[Motor3] = sensorvalue[Motor4] = 0;
+		SensorValue[Motor1] = SensorValue[Motor2] = SensorValue[Motor3] = SensorValue[Motor4] = 0;
 		clearTimer(T1);
 		wait1Msec(1000);
 		int speed = 127;
-		double motorSpeed = encoders[i] / (time1(T1) * 1000);
+		float motorSpeed = encoders[i] / (time1(T1) * 1000);
 		while(motorSpeed > slowSpeed - 5 && motorSpeed < slowSpeed + 5) {
 			speed--;
 			motors[i] = speed;
 			wait1Msec(100);
-			sensorvalue[Motor1] = sensorvalue[Motor2] = sensorvalue[Motor3] = sensorvalue[Motor4] = 0;
+			SensorValue[Motor1] = SensorValue[Motor2] = SensorValue[Motor3] = SensorValue[Motor4] = 0;
 			clearTimer(T1);
 			wait1Msec(900);
 			motorSpeed = encoders[i] / (time1(T1) * 1000);
 		}
-		writeDebugStream("Motor");
-		writeDebugStream(i+1);
-		writeDebugStream(": ");
-		writeDebugStream(speed);
-		writeDebugStream("\n");
+		string tensPlace[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12"};
+		string onesPlace[] = {"0", "1", "2", "3", "4", "5", "6", "7", "8", "9"};
+		int ones = motorSpeed % 10;
+		int tens = motorSpeed / 10;
+		writeDebugStream(tensPlace[tens]);
+		writeDebugStreamLine(onesPlace[ones]);
 	}
 }
